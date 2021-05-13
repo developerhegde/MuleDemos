@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:google-drive="http://www.mulesoft.org/schema/mule/google-drive" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/google-drive http://www.mulesoft.org/schema/mule/google-drive/current/mule-google-drive.xsd">
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="dd4c14ed-329f-4893-af1e-f0fa51e230cb" >
+		<db:my-sql-connection host="remotemysql.com" port="3306" user="Z2ta0kGNCR" password="x2W3qxdRjU" database="Z2ta0kGNCR" />
+	</db:config>
+	<flow name="demos_transactionFlow" doc:id="063168be-2951-4e10-9d64-742098f2edc9" maxConcurrency="1" initialState="stopped">
+		<db:listener doc:name="On Table Row" doc:id="321a4591-7511-4847-8bf1-90232ec4ee25" config-ref="Database_Config1" table="employees" watermarkColumn="id" idColumn="lastname">
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</db:listener>
+		<try doc:name="Try" doc:id="edf84e9d-00e1-4918-986a-94658d203e15" transactionalAction="ALWAYS_BEGIN">
+			<ee:transform doc:name="Transform Message" doc:id="5b812144-1d38-48bc-9028-c70872486d1d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload ++ {status: "terminated"}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+					<ee:set-variable variableName="id" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.id]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<db:insert doc:name="Insert" doc:id="160ae6ff-da08-47a0-a56e-f298512128e9" config-ref="Database_Config1">
+			<db:sql><![CDATA[insert into employeecopy values (:id, :firstname, :lastname, :department, :salary, :status )]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	id: payload.id,
+	firstname: payload.firstname,
+	lastname: payload.lastname,
+	department: payload.department,
+	salary: payload.salary,
+	status: payload.status
+}]]]></db:input-parameters>
+		</db:insert>
+			<ee:transform doc:name="Transform Message" doc:id="3508f8c0-106e-4c28-a16b-442fc253594a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if(vars.id ~= 102)
+	dw::Runtime::fail("Nothing Good comes of it for id: " ++ vars.id)
+	else
+	payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		</try>
+	</flow>
+	<flow name="fileRead" doc:id="2e54091e-0ba7-4212-bd8c-6c85d65ca26f" >
+		<file:listener doc:name="On New or Updated File" doc:id="b7cbbc92-0a65-4b70-8ce5-3cee563d72d8" directory="/Users/vikashegde/Documents/Mule/Training/data/IP" recursive="false" moveToDirectory="/Users/vikashegde/Documents/Mule/Training/data/OP">
+			<scheduling-strategy >
+				<fixed-frequency frequency="1"/>
+			</scheduling-strategy>
+		</file:listener>
+		<file:write doc:name="Write" doc:id="8a710f83-b671-467f-bd32-c9b0de9b875a" path="#['/Users/vikashegde/Documents/Mule/Training/data/OP/' ++ correlationId ++ attributes.fileName]"/>
+	</flow>
+</mule>

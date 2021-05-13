@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="50ac88cc-b256-4a61-9890-e59583495f83" >
+		<http:request-connection host="localhost" port="8081" connectionIdleTimeout="300000"/>
+	</http:request-config>
+	<configuration doc:name="Configuration" doc:id="5c5ac423-cbbf-4551-8f04-226f925eadda" defaultErrorHandler-ref="demosError_Handler" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="784b67fc-006b-483c-abf2-de77cfff719c" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="a0b15247-3359-4fcf-a5ee-ebfb7eb3364e" file="config.yaml" />
+	<flow name="scatter-gather" doc:id="711f3173-f8b2-4e1a-bbea-93b88b54d598" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="7ea0b733-7614-4f50-ba40-b4298227a50a" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<ee:transform doc:name="Transform Message" doc:id="ab7d8711-3007-47e6-a9f7-1eb40863cbee" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+"This is a payload"]]></ee:set-payload>
+				<ee:set-attributes ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	client_id: "1234",
+	client_secret: "secret"
+}]]></ee:set-attributes>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="tempVar" ><![CDATA[%dw 2.0
+output application/java
+---
+"tempVar"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="9298f08a-805c-4cbc-886f-8cbd0b21a3df" >
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="c1ae612c-1506-4b05-b925-15d7eff59056" message="Route-1"/>
+				<ee:transform doc:name="Transform Message" doc:id="e6065d6a-b6f3-4fed-b077-d23cf6c729cc" >
+					<ee:message >
+						<ee:set-attributes ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	newAttribute: "New Attribute"
+}]]></ee:set-attributes>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="route1Var" ><![CDATA[%dw 2.0
+output application/java
+---
+"route 1 variable"]]></ee:set-variable>
+						<ee:set-variable variableName="routeVar" ><![CDATA[%dw 2.0
+output application/java
+---
+"Route 1"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<set-payload value="#[3/1]" doc:name="Route-1" doc:id="deef3fd7-e404-4435-a624-139efb77d673" />
+			</route>
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="ba0d4192-cda0-4a5f-be6a-e18d387660b7" message="Route-2"/>
+				<ee:transform doc:name="Transform Message" doc:id="06c4503b-5909-4cb1-8b1e-eacce1e36507" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="routeVar" ><![CDATA[%dw 2.0
+output application/java
+---
+"Route 2"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</route>
+		</scatter-gather>
+		<logger level="INFO" doc:name="Logger" doc:id="39f90300-0486-4433-8ae1-3fea0354171a" message=".."/>
+		<foreach doc:name="For Each" doc:id="7600a011-e1d9-4bcb-8061-81151c48aea5" collection="#[payload pluck($)]">
+			<logger level="INFO" doc:name="Logger" doc:id="0a926390-9664-4efe-88e4-6e3f6fab698b" message="#[payload]"/>
+		</foreach>
+	</flow>
+	<flow name="target" doc:id="80175704-02fd-40b5-a9ed-7e2f27c5d1b2" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="faa6a5ec-348b-48e4-9eea-58cfa5e290b5" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="vikas" doc:name="Set Variable" doc:id="ae183a94-b5cd-4ddb-8101-58fae71ccc04" variableName="tempVar"/>
+		<logger level="INFO" doc:name="Logger" doc:id="1f1d1991-f87b-4bb6-a7a4-efde7c59e2f1" />
+		<flow-ref doc:name="Flow Reference" doc:id="7586f60b-480d-4502-a89c-608ce2f7da4b" name="privateFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="75a593e1-8479-48e3-a205-f1f8de0b8a10" />
+	</flow>
+	<sub-flow name="demosSub_Flow" doc:id="d987e96a-8fe6-41dd-bb19-f8302044a251" >
+		<set-payload value='#[{&#10;	name: "Vikas",&#10;	age: 32&#10;}]' doc:name="Set Payload" doc:id="f3e1ecd4-7d58-4c25-a610-8a1abc634030" />
+		<ee:transform doc:name="Transform Message" doc:id="b8832a20-8d3f-4e0f-bf0c-e6295c90d4a1" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="tempVar" ><![CDATA[%dw 2.0
+output application/java
+---
+'hegde']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="da2f3de2-64ec-4450-b05b-a85209cbcae2" />
+	</sub-flow>
+	<flow name="privateFlow" doc:id="be003f4c-75dc-4bfd-afce-fa5a262a1df8" >
+		<set-payload value="#['privateFlow']" doc:name="Set Payload" doc:id="2f640f06-a41c-4b80-bb81-45f64bb53944" />
+		<set-variable value="privateFlow" doc:name="Set Variable" doc:id="02dc8b2b-de9d-4796-8179-f4c154bbc67e" variableName="tempVar"/>
+	</flow>
+	<flow name="httpAttributes1" doc:id="0fb5c4cd-834b-4425-aeaa-7f87a3737d71" initialState="stopped">
+		<http:listener doc:name="Listener" doc:id="e6dae159-b260-4dd6-8058-b658660a6b48" config-ref="mytestapispec-httpListenerConfig" path="/1">
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="2bdf3beb-2f16-4284-87cf-e9965b33472b" message="#[attributes.headers]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a975f192-2bd1-4a4e-8d72-fd9980f615f7" message="#[attributes.headers]"/>
+	</flow>
+	<flow name="httpAttributes2" doc:id="69f14d71-8278-4511-89a6-fd4cd362774d" initialState="stopped">
+		<http:listener doc:name="Listener" doc:id="fc8a8167-1bbf-4654-840c-1985d9d541c0" config-ref="mytestapispec-httpListenerConfig" path="/2">
+			<http:response >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"successheader2" : "successResponse2"
+}]]]></http:headers>
+			</http:response>
+			<http:error-response >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"failureheader2" : "failureResponse2"
+}]]]></http:headers>
+			</http:error-response>
+		</http:listener>
+		<ee:transform doc:name="Transform Message" doc:id="87eba8d9-ba17-45f5-9bd3-1155bbf884b6" >
+			<ee:message >
+				<ee:set-attributes ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	flow: "httpAttributes2"
+}]]></ee:set-attributes>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="005eb83a-a7a0-432d-9167-f7ba1e9a5812" message="#[attributes.headers]"/>
+	</flow>
+	<flow name="conditionalLogic" doc:id="143c76bb-3819-4354-abcd-8ec6892f7c4a" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="757d8c3d-daea-49ad-9dc3-7429f2e67822" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-payload value="#[100]" doc:name="Set Payload" doc:id="dc0ee42f-ee4c-4b5a-bf6c-c863441c70d5" />
+		<choice doc:name="Choice" doc:id="55f396db-5700-4c13-b11e-f8c60a5350ae" >
+			<when expression="#[payload &lt; 200]">
+				<logger level="INFO" doc:name="Logger" doc:id="32ff0698-0ca9-4303-8850-8dd323211386" message="less than 200"/>
+			</when>
+			<when expression="#[payload == 100]">
+				<logger level="INFO" doc:name="Logger" doc:id="38467c12-c292-4654-bcea-8d5f0cf632b3" message="100"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="aaed46b5-df12-4c4c-b43d-f5411cb289ad" message="greater than 200"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="forEach" doc:id="8fc26f7b-327e-4511-a2c0-2a197920a84f" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="22582c45-c0c1-4a03-8dbe-d66eeb6b521a" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-payload value="#[['1', '2', '3', '4']]" doc:name="Set Payload" doc:id="ffda892f-8a00-4a53-ad93-9ecc5873374c" />
+		<set-variable value="#[100 as Number]" doc:name="tempVar = 100" doc:id="08a5e481-bbc0-4596-88bc-e1db06623239" variableName="tempVar"/>
+		<foreach doc:name="For Each" doc:id="21d01550-eed8-471d-9f99-0c22c38f2a97" collection="#[payload]">
+			<set-payload value="#['order' ++ payload]" doc:name="Set Payload" doc:id="713608b8-3ff9-4169-b846-d98580743bc2" />
+			<set-variable value="#[vars.tempVar + 1]" doc:name="Set Variable" doc:id="e416b0a8-851b-4091-9511-a57bd0b6fe1e" variableName="tempVar" />
+		</foreach>
+		<logger level="INFO" doc:name="payload" doc:id="6b6b685f-764c-4284-ad6d-1b14633b3bc6" message="#[payload]" />
+		<logger level="INFO" doc:name="tempVar" doc:id="ab343bb4-5e39-4e17-981c-d72db935c8e9" message="#[vars.tempVar]"/>
+	</flow>
+	<flow name="errorHandling" doc:id="574cef2a-7a4e-47dc-814a-e360274b6f5f" initialState="stopped">
+		<http:listener doc:name="Listener" doc:id="27d569e0-000e-41d5-b0bb-922d22fe94fa" config-ref="mytestapispec-httpListenerConfig" path="/error"/>
+		<ee:transform doc:name="Transform Message" doc:id="1eb32096-d635-45b8-9abb-dbe2d0bb0a88" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+1/0]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="b72c5e30-c582-4d7d-8ed4-c50ea0675474" config-ref="HTTP_Request_configuration" path="/something"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ee009f03-b194-498d-b1c5-91907a139aa5" type="HTTP:BAD_GATEWAY, HTTP:NOT_FOUND">
+				<logger level="INFO" doc:name="Logger" doc:id="9053dfe1-6d9d-4081-a8fe-47613f818461" message="logger"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<error-handler name="demosError_Handler" doc:id="8caf825f-ce48-435d-a23c-96a33dc3d565" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="41262da3-e127-45bd-bfff-df545d070127" type="ANY">
+			<set-payload value="#['GloablErrorHandler']" doc:name="Set Payload" doc:id="ce687a01-72be-49db-8fb1-f3a49e244955" />
+		</on-error-propagate>
+	</error-handler>
+	<flow name="database" doc:id="b705eab2-ab94-48c7-8a09-e669fdef5464" maxConcurrency="1" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="5b2928da-0d30-4993-b77f-4b37d7c45168" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<db:select doc:name="Select" doc:id="c803e555-400b-4732-99aa-5d0ab102420b" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from employee]]></db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Logger" doc:id="d20824ca-fece-4ff6-8417-8e5783b461d5" message="#[typeOf(payload)]"/>
+	</flow>
+	<flow name="batch-processing-demoFlow" doc:id="5310ea30-3de5-49ae-9c27-00f617b2bcd1" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="5f53ddf3-1023-46e3-8a9d-ca2db295a4cc" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[1 as Number]" doc:name="counter" doc:id="6b1b3a16-1a5f-4918-bb1b-560de1812609" variableName="counter"/>
+		<set-payload value="#[[1, 2, 3]]" doc:name="Set Payload" doc:id="430c1f91-82f8-4942-877a-0cb102c65175" />
+		<batch:job jobName="batch-processing-demoBatch_Job" doc:id="d4a0d187-fe9d-4015-8674-366cfe600438" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="2f2c8f78-bd0a-4980-bcb8-f0455e4693c3" >
+					<set-variable value="#[vars.counter + 10]" doc:name="counter + 10" doc:id="c88df77c-16ab-450a-8e77-8a66a365f55b" variableName="counter"/>
+					<set-variable value="#[vars.counter]" doc:name="stepVar to counter" doc:id="5c381b5e-94cb-4f62-b7a2-604b9befb5e5" variableName="stepVar"/>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="0a873320-c0c4-443d-be1e-5262a20c0761" message="#['counter: ' ++ vars.counter ++ '\n' ++&#10;'stepVar: ' ++ (vars.stepVar default &quot;null&quot;)]"/>
+			</batch:on-complete>
+		</batch:job>
+		<logger level="INFO" doc:name="Logger" doc:id="fbb76694-5799-4a0f-9f8f-9d8184184b7b" />
+	</flow>
+	<flow name="batch-processing-demoFlow1" doc:id="d4259d31-84d7-4041-a600-ab3b5b234172" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="2505b935-7c67-4c5b-a7e6-5cd7643dbd5f" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-payload value="#[[1, 2, 3, 4]]" doc:name="Set Payload" doc:id="201955b0-c720-40b7-a536-3412c4d24c5c" />
+		<batch:job jobName="batch-processing-demoBatch_Job1" doc:id="911109e5-6240-416d-a2ea-7cade9bc735c" >
+			<batch:process-records >
+				<batch:step name="Batch_Step1" doc:id="a0963e6d-0677-4fc8-b787-c97d48f90e33" acceptExpression="#[(payload mod 2) != 0]">
+					<ee:transform doc:name="payload / 3" doc:id="1cfe5d78-ed23-4e9a-8332-f77930d716c3" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload/3]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="be57ff56-2424-4508-85a2-3286f4875121" size="2">
+						<logger level="INFO" doc:name="Logger" doc:id="da34d8e0-d59f-4057-9b46-c00aaf8e3dc5" message="#[output application/json --- payload]"/>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+		</batch:job>
+	</flow>
+	<flow name="validation" doc:id="5cbba3e6-e225-49b5-ab27-665aca17b46f" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="3048cd52-26c7-4fa8-b4e2-f4d196d8ef2c" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-payload value="#['something']" doc:name="Set Payload" doc:id="17efc10c-d86f-4644-bd4d-652ac924ea7a" />
+		<validation:is-blank-string doc:name="Is blank string" doc:id="e50b3e1d-b3c0-4b78-a457-1870abb92d14" value="#[payload]" message="Not blank"/>
+		<set-payload value="#['All Good']" doc:name="Set Payload" doc:id="fb631d0f-488b-4e88-add5-a3864e2adc7a" />
+	</flow>
+</mule>
