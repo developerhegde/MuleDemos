@@ -66,5 +66,6 @@ if(vars.id ~= 102)
 	</flow>
 	<sub-flow name="demos_transactionSub_Flow" doc:id="7f252e4d-b418-4dcc-9d40-ac6ca95f42ef" >
 		<set-variable value="100" doc:name="tempVar" doc:id="d7306776-cbed-44c2-93c9-5dadcf91fc1e" variableName="tempVar"/>
+		<logger level="INFO" doc:name="Logger" doc:id="015f4fc5-45db-4cb0-a670-7e524f4ac9bc" message="logger added"/>
 	</sub-flow>
 </mule>
