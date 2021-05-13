@@ -64,4 +64,7 @@ if(vars.id ~= 102)
 		</file:listener>
 		<file:write doc:name="Write" doc:id="8a710f83-b671-467f-bd32-c9b0de9b875a" path="#['/Users/vikashegde/Documents/Mule/Training/data/OP/' ++ correlationId ++ attributes.fileName]"/>
 	</flow>
+	<sub-flow name="demos_transactionSub_Flow" doc:id="7f252e4d-b418-4dcc-9d40-ac6ca95f42ef" >
+		<set-variable value="100" doc:name="tempVar" doc:id="d7306776-cbed-44c2-93c9-5dadcf91fc1e" variableName="tempVar"/>
+	</sub-flow>
 </mule>
