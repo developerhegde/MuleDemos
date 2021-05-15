@@ -40,17 +40,17 @@
 							<artifactId>ojdbc8</artifactId>
 						</sharedLibrary>
 					</sharedLibraries>
-						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>${app.runtime}</muleVersion>
-						<username>developerhegde90</username>
-						<password>Munakshatra@10</password>
-						<applicationName>MuleDemos</applicationName>
-						<environment>Sandbox</environment>
-				      <workers>1</workers>
-				      <workerType>MICRO</workerType>
-				      <properties>
-				        <key>value</key>
-				      </properties>
+						<cloudHubDeployment>
+							<uri>https://anypoint.mulesoft.com</uri>
+							<muleVersion>${app.runtime}</muleVersion>
+							<username>developerhegde90</username>
+							<password>Munakshatra@10</password>
+							<applicationName>MuleDemos</applicationName>
+							<environment>Sandbox</environment>
+					      	<workers>1</workers>
+					      	<workerType>MICRO</workerType>
+					      	<objectStoreV2>true</objectStoreV2>
+						</cloudHubDeployment>
 				</configuration>
 			</plugin>
 		</plugins>
