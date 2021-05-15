@@ -1,8 +1,9 @@
-
-node {
+pipeline {
+stages {
     stage('build'){
         withMaven (maven: 'maven3'){
             sh 'mvn clean package deploy -DmuleDeploy'    
         }
     }
+}
 }
