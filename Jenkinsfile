@@ -16,7 +16,7 @@ pipeline {
     node {
         stage ('deploy') {
             steps {
-                sh 'mvn deploy -DmuleDeploy
+                sh 'mvn deploy -DmuleDeploy'
             }
         }
     }    
