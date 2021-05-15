@@ -9,7 +9,7 @@ stage('Deploy approval'){
 node {
     stage('deploy-to-prod'){
         withMaven(maven: 'maven3'){
-            sh 'mvn deploy -DmuleDeploy
+            sh 'mvn deploy -DmuleDeploy'
         }
     }
 }
