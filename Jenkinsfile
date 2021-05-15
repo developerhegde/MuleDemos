@@ -1,23 +1,18 @@
 pipeline {
     agent any
-    
-    node {
+    stages {
         stage ('package') {
             steps {
                 sh 'mvn clean package'
             }
         }
-    }
-
-    stage('Deploy approval'){
+        stage('Deploy approval'){
         input "Deploy to test?"
     }
-    
-    node {
         stage ('deploy') {
             steps {
                 sh 'mvn deploy -DmuleDeploy'
             }
         }
-    }    
+    }
 }
