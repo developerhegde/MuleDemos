@@ -1,12 +1,8 @@
-pipeline {
-    agent any
-stages {
+node {
     stage('build'){
-        steps {
-            withMaven (maven: 'maven3'){
-            sh 'mvn clean package deploy -DmuleDeploy'    
+        withMaven(maven: 'maven3') {
+            sh 'mvn clean package'
         }
-        }
+            
     }
-}
 }
