@@ -44,7 +44,7 @@
 							<uri>https://anypoint.mulesoft.com</uri>
 							<muleVersion>${app.runtime}</muleVersion>
 							<username>developerhegde90</username>
-							<password>Munakshatra@10</password>
+							<password>Munakshatra210</password>
 							<applicationName>MuleDemos</applicationName>
 							<environment>Sandbox</environment>
 					      	<workers>1</workers>
