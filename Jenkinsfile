@@ -6,6 +6,15 @@ node {
         }
     }
 }
+
+node {
+    stage('build'){
+        withMaven (maven: 'maven3'){
+            sh 'mvn test'    
+        }
+    }
+}
+
 stage('Deploy approval'){
     input "Deploy to prod?"
 }
