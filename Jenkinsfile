@@ -1,24 +1,24 @@
-
-node {
-    stage('test'){
-
-    	echo 'Test Started'
-=======
-        echo 'Test Started'
-
-        withMaven (maven: 'maven3'){
-            sh 'mvn test'    
-        }
+pipeline {
+    agent any
+    tools { 
+        maven 'maven3'
     }
-}
-
-stage('Deploy approval'){
-    input "Deploy to prod?"
-}
-node {
-    stage('deploy-to-prod'){
-        withMaven(maven: 'maven3'){
-            sh 'mvn deploy -DmuleDeploy'
+    stages {
+        stage('build and test') {
+            steps{
+                sh 'mvn clean test'
+            }
+            post {
+                always {
+                    publishHTML (target : [allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'target/munit-reports',
+                        reportFiles: 'myreport.html',
+                        reportName: 'My Reports',
+                        reportTitles: 'The Report'])
+                }
+            }
         }
     }
 }
