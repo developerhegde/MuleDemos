@@ -8,7 +8,8 @@ node {
 }
 
 node {
-    stage('build'){
+    stage('test'){
+        echo 'Test Started'
         withMaven (maven: 'maven3'){
             sh 'mvn test'    
         }
