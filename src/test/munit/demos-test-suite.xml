@@ -13,7 +13,7 @@
 			<flow-ref doc:name="Flow-ref to privateFlow" doc:id="908d8915-4981-46a2-bf89-200f0a64e012" name="privateFlow"/>
 		</munit:execution>
 		<munit:validation >
-			<munit-tools:assert-that doc:name="Assert that" doc:id="484e017a-86f0-4ce4-8732-5e4f77cf1706" message="Payload should be null" expression="#[payload]" is="#[MunitTools::nullValue()]"/>
+			<munit-tools:assert-that doc:name="Assert that" doc:id="484e017a-86f0-4ce4-8732-5e4f77cf1706" message="Payload should be null" expression="#[payload]" is="#[MunitTools::notNullValue()]"/>
 		</munit:validation>
 	</munit:test>
 

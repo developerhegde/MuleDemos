@@ -2,13 +2,14 @@
 node {
     stage('build'){
         withMaven (maven: 'maven3'){
-            sh 'mvn clean install'    
+            sh 'mvn  clean install -DskipTests'    
         }
     }
 }
 
 node {
-    stage('build'){
+    stage('test'){
+    	echo 'Test Started'
         withMaven (maven: 'maven3'){
             sh 'mvn test'    
         }
