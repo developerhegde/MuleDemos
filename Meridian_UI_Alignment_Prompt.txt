@@ -1,0 +1,285 @@
+Improve the Meridian Streamlit UI with a focused UX alignment and layout pass.
+
+  ## Objective
+
+  Make the application feel at least **40% easier to scan and operate** for its core operator workflows, without
+changing Meridian business logic, data semantics, CLI/API parity, promotion safeguards, or tenant-specific configuration
+
+  “40% better” must be demonstrated through measurable UX acceptance criteria below, not asserted subjectively.
+
+  ## Product and architectural constraints
+
+  - Streamlit remains the supported local operator UI.
+  - Keep `ui/app.py` thin:
+    - presentation primitives and reusable layouts belong in `ui/components.py`;
+    - styles belong in `ui/theme.py` and `ui/tokens.py`;
+    - governance, data derivation, and policy rules remain in `meridian.core`.
+  - Preserve CLI/API/UI parity. Never create a UI-only capability or bypass a core/CLI guard.
+  - Do not add client-specific details: no real organisation ids, business-group names, application names, environment
+names, hostnames, credentials, or URLs.
+  - Preserve all write safety:
+    - dry-run before apply;
+    - typed production confirmation;
+    - role checks;
+    - read-only, environment allowlist, deployment-window, endpoint-confidence, and token guards;
+    - append-only run log.
+  - Preserve accessibility:
+    - semantic read-only tables;
+    - visible keyboard focus;
+    - labelled inputs;
+    - text/shape in addition to colour for status;
+    - reduced-motion support;
+    - no inaccessible UI-only information.
+  - Reuse existing design tokens. Do not type arbitrary spacing, colour, radius, typography, or shadow values in screen
+call sites.
+  - Screens must not directly call `st.dataframe` or `st.data_editor`; use `ui.table`, `ui.data_table`, and `ui.
+editable_data_table`.
+  - Do not introduce new third-party UI libraries unless already present in the repository.
+  - Do not change unrelated features or refactor unrelated domain code.
+  - Do not commit changes.
+
+  ## Core operator flows to optimise
+
+  Design and test around these workflows:
+
+  1. **Understand installation posture**
+     - Determine token state, write permissions, environment scope, and current screen context in under 10 seconds.
+
+  2. **Review drift**
+     - Select source/target environments, understand comparison scope, filter findings, inspect a row, and export the
+relevant filtered evidence.
+
+  3. **Collect and inspect runtime data**
+     - Recognise whether data is current, stale, absent, partially collected, or failed.
+     - Start collection only when permitted and understand why it is disabled otherwise.
+
+  4. **Promote safely**
+     - Identify source, target, write posture, scope, selected count, production state, and next required action without
+scrolling between unrelated regions.
+     - Plan and apply each of MQ, APIs, client applications, and contracts using the same predictable interaction
+pattern.
+
+  5. **Resolve scope exclusions**
+     - Search, exclude, amend a reason, restore, and understand the effect on counts without losing selection or context
+
+  ## Measurable acceptance criteria
+
+  ### Layout consistency
+
+  - Every screen uses the same page anatomy in this exact order:
+    1. page title;
+    2. one-sentence purpose;
+    3. scope/context row where a scope exists;
+    4. page-level status and/or primary action area;
+    5. grouped task sections.
+  - Every screen uses shared header and section components; no screen-local title or heading styling.
+  - Replace recurring arbitrary `st.columns()` ratios with named layouts from `ui.components.columns()`.
+  - Add named layouts only for recurring patterns. Each named layout must be used at least twice, except a documented
+page-shell-specific layout.
+  - No new literal spacing/radius/colour values may be introduced in `ui/app.py`.
+  - Related controls in a row align to a common top edge and use consistent width behavior.
+  - Primary action buttons must remain in a stable location as filters, errors, empty states, or status text change.
+
+  ### Visual hierarchy and scanability
+
+  - Each screen contains no more than one visually dominant primary action per task area.
+  - The first viewport of every write-capable screen must show:
+    - current environment/target;
+    - write posture;
+    - primary action or the specific reason it is unavailable.
+  - Long pages must be divided into visually distinct sections with consistent heading, caption, and spacing treatment.
+  - Use cards only for coherent tasks or decision areas; do not create nested-card clutter.
+  - Page-level information, task actions, data tables, and secondary guidance must be visually distinguishable through
+shared components and token-based hierarchy.
+
+  ### Table interaction
+
+  - All interactive read-only tables use a consistent toolbar sequence:
+    `Search → filters → sort → density → columns → full screen → CSV export`
+    Omit controls only when not applicable.
+  - Toolbar controls must remain readable at normal desktop width; no label truncation such as `c…`.
+  - Tables with horizontal scrolling pin the identity/subject column.
+  - Captions consistently state scope and row count.
+  - CSV download must export all rows matching the active filters, including rows not on the current page.
+  - CSV label/help must explicitly describe the exported scope.
+  - Editable grids must:
+    - use `ui.editable_data_table()`;
+    - keep one clear editable column set;
+    - keep their fullscreen mirror read-only;
+    - preserve identity-based selection across filtering and sorting.
+
+  ### Promotion flow
+
+  - The Promotion screen has one persistent promotion context summary near the top containing:
+    - source environment;
+    - target environment;
+    - target production state;
+    - effective write posture;
+    - selected scope/count when a plan exists.
+  - All four steps share this structure:
+    1. step title and one-sentence purpose;
+    2. plan/rebuild action;
+    3. plan status and metrics;
+    4. searchable/selectable rows;
+    5. explicit selected count;
+    6. guarded apply action;
+    7. outcome or next-step guidance.
+  - Step order remains: MQ → APIs → client applications → contracts.
+  - Planning must be visually labelled as offline/non-writing.
+  - Applying must be visually labelled as live/guarded and preserve all existing safety controls.
+  - Production target state must be recognisable by text and shape, not colour alone.
+
+  ### Accessibility and responsive behavior
+
+  - Existing semantic table markup remains intact.
+  - No dynamic text rendered with `unsafe_allow_html=True` may be unescaped.
+  - Focus-visible styling remains clear across sidebar, rail, form controls, buttons, dialogs, and table controls.
+  - The collapsed navigation rail must remain keyboard accessible and expose the current screen in text.
+  - At widths below the existing Streamlit sidebar breakpoint, content must not be obstructed by the rail and primary
+actions must remain usable.
+  - Respect `prefers-reduced-motion`.
+
+  ### Evidence of improvement
+
+  Create a short `docs/ui-ux-acceptance.md` that records:
+  - the five workflows above;
+  - a before/after checklist of interaction friction removed;
+  - the shared layout primitives introduced or used;
+  - known limitations requiring manual browser testing.
+
+  For each core workflow, document a measurable outcome such as:
+  - key context visible without scrolling;
+  - fewer interaction modes;
+  - one predictable toolbar/action location;
+  - no lost selection after filtering;
+  - no ambiguous disabled control;
+  - export output matches visible filtering.
+
+  Do not invent metrics that cannot be measured in this repository. Use auditable structural assertions, AppTest
+interaction checks, and manual-browser verification instructions.
+
+  ## Implementation work
+
+  ### 1. Establish shared page and layout primitives
+
+  - Audit page structure and all `st.columns()` calls in `ui/app.py`.
+  - Create or refine reusable primitives in `ui/components.py`, such as:
+    - page shell/header;
+    - section heading;
+    - named column layouts;
+    - task/action header;
+    - status/action region;
+    - scope/context presentation;
+    - consistent card/form wrappers.
+  - Refactor screens to use those primitives.
+  - Keep components presentation-only; they must not import Streamlit-independent domain logic from the app layer.
+
+  ### 2. Normalise layout and alignment
+
+  - Replace one-off column ratios with named layouts.
+  - Standardise:
+    - action alignment;
+    - card padding;
+    - title/caption spacing;
+    - metric rows;
+    - form rows;
+    - warning/error placement;
+    - table toolbar geometry.
+  - Use existing token values and CSS variables.
+  - Prefer a simple and repeatable layout over dense or decorative design.
+
+  ### 3. Improve screen hierarchy
+
+  Review and improve, at minimum:
+  - Connection & Inventory;
+  - Drift Dashboard;
+  - Runtime Applications;
+  - MQ Destinations;
+  - Promotion;
+  - Run History;
+  - Endpoint Confidence;
+  - Compare Rules;
+  - Logs;
+  - Settings;
+  - Users & Roles.
+
+  For each screen:
+  - ensure its primary operator question is obvious from the first viewport;
+  - ensure controls are grouped by task;
+  - ensure context is not repeated unnecessarily;
+  - ensure warnings and empty states do not displace critical actions unpredictably.
+
+  ### 4. Improve promotion UX
+
+  - Implement the persistent promotion context summary.
+  - Use shared step presentation components.
+  - Align all step controls and metrics.
+  - Keep existing credential display behavior:
+    - Step 3 credential files are `promote-apps-*.json`;
+    - only app-promotion credential artifacts are shown in the UI;
+    - credentials remain visible once and are deletable only after explicit confirmation.
+
+  ### 5. Improve tables and exports
+
+  - Standardise `ui.data_table()` toolbar placement and control behavior.
+  - Ensure filtered CSV exports include all filtered rows before pagination.
+  - Ensure fullscreen table behavior remains read-only and consistent.
+  - Do not regress pinned columns, semantic markup, search, sorting, paging, density, or column selection.
+
+  ## Tests and verification
+
+  Add or update focused tests that verify:
+
+  1. Every screen uses the shared page shell/header contract.
+  2. Repeated layouts use named layout primitives rather than screen-local ratios.
+  3. No direct `st.dataframe` or `st.data_editor` calls exist in `ui/app.py`.
+  4. Table toolbar controls follow the required order when enabled.
+  5. CSV output contains filtered rows across all pages and excludes non-matching rows.
+  6. Dynamic values in HTML-producing components are escaped.
+  7. Promotion screen renders persistent source/target/write-posture context.
+  8. All four promotion steps expose the same structural contract and remain dependency ordered.
+  9. Disabled controls always expose an actionable reason.
+  10. Identity-based selections survive filtering/reordering.
+  11. The app renders every screen through Streamlit AppTest without exceptions.
+  12. Existing accessibility table tests still pass.
+
+  Run, at minimum:
+
+  ```bash
+  .venv/Scripts/python.exe -m unittest \
+    tests.test_app_shell \
+    tests.test_components \
+    tests.test_data_table \
+    tests.test_scope_selection \
+    tests.test_ui_promotion_screen \
+    tests.test_ui_promotion_panel \
+    tests.test_icon_rail
+
+Then run any additional focused test modules affected by the changed screens/components.
+
+Also run:
+
+git diff --check
+
+## Manual browser verification checklist
+
+Because Streamlit AppTest cannot fully verify browser layout, record the following checks in  docs/ui-ux-acceptance.md :
+
+• Desktop widths: 1280px and 1440px.
+• Narrow width: 768px or below.
+• Light and dark theme.
+• Sidebar expanded and collapsed rail.
+• Keyboard-only traversal of sidebar/rail, page controls, table controls, dialogs, and promotion actions.
+• A long/wide table with search, sort, paging, fullscreen, and CSV export.
+• A promotion plan with no selection, partial selection, production target, and blocked write posture.
+• An empty state, partial collection error, and disabled action state.
+
+## Completion report
+
+After implementing and testing, provide:
+
+• concise summary of changes;
+• changed files and key locations using  path:line ;
+• test commands and results;
+• explicit statement of which acceptance criteria are automated versus requiring manual browser verification;
+• any remaining limitations.
